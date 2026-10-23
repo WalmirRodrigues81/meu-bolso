@@ -345,12 +345,17 @@
 
   const LADO_MAXIMO = 1600;
 
-  // Seletor de foto escondido: no celular, abre a câmera ou a galeria.
-  const seletorFoto = document.createElement("input");
-  seletorFoto.type = "file";
-  seletorFoto.accept = "image/*";
-  seletorFoto.hidden = true;
-  document.body.append(seletorFoto);
+  // Seletores de foto escondidos: um abre a câmera traseira direto, o outro a galeria.
+  function criarSeletorFoto(camera) {
+    const seletor = document.createElement("input");
+    seletor.type = "file";
+    seletor.accept = "image/*";
+    if (camera) seletor.setAttribute("capture", "environment");
+    seletor.hidden = true;
+    seletor.addEventListener("change", () => fotoEscolhida(seletor));
+    document.body.append(seletor);
+    return seletor;
+  }
 
   function travarAssistente(travar) {
     for (const b of $("form-assistente").querySelectorAll("button")) b.disabled = travar;
@@ -412,11 +417,14 @@
     falarComAssistente({ mensagem });
   });
 
-  $("botao-foto").addEventListener("click", () => seletorFoto.click());
+  const seletorCamera = criarSeletorFoto(true);
+  const seletorGaleria = criarSeletorFoto(false);
+  $("botao-foto").addEventListener("click", () => seletorCamera.click());
+  $("botao-galeria").addEventListener("click", () => seletorGaleria.click());
 
-  seletorFoto.addEventListener("change", async () => {
-    const arquivo = seletorFoto.files[0];
-    seletorFoto.value = "";
+  async function fotoEscolhida(seletor) {
+    const arquivo = seletor.files[0];
+    seletor.value = "";
     if (!arquivo) return;
     let imagem;
     try {
@@ -426,7 +434,7 @@
     }
     // A foto só vai para o assistente; não é guardada em lugar nenhum.
     falarComAssistente({ mensagem: $("frase").value.trim(), imagem, mime: "image/jpeg" });
-  });
+  }
 
   // ---------- Início ----------
 
