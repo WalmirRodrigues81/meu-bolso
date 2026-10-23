@@ -1,4 +1,4 @@
-// Meu Bolso: entrada, lançamento à mão, lista e total do mês.
+// Meu Bolso: entrada, lançamento à mão, assistente, lista e total do mês.
 (function () {
   const config = window.MEU_BOLSO;
   const CATEGORIAS = config.CATEGORIAS;
@@ -341,17 +341,91 @@
     $("texto-resumo").textContent = texto || "";
   }
 
-  // ---------- Assistente (chega na sexta) ----------
+  // ---------- Assistente ----------
 
-  const AVISO_ASSISTENTE = "O assistente chega na sexta.";
+  const LADO_MAXIMO = 1600;
+
+  // Seletor de foto escondido: no celular, abre a câmera ou a galeria.
+  const seletorFoto = document.createElement("input");
+  seletorFoto.type = "file";
+  seletorFoto.accept = "image/*";
+  seletorFoto.hidden = true;
+  document.body.append(seletorFoto);
+
+  function travarAssistente(travar) {
+    for (const b of $("form-assistente").querySelectorAll("button")) b.disabled = travar;
+  }
+
+  // Reduz a foto no próprio aparelho (no máximo 1600 px, em JPEG) e devolve só o base64.
+  async function reduzirFoto(arquivo) {
+    const endereco = URL.createObjectURL(arquivo);
+    try {
+      const img = new Image();
+      img.src = endereco;
+      await img.decode();
+      const escala = Math.min(1, LADO_MAXIMO / Math.max(img.naturalWidth, img.naturalHeight));
+      const tela = document.createElement("canvas");
+      tela.width = Math.round(img.naturalWidth * escala);
+      tela.height = Math.round(img.naturalHeight * escala);
+      tela.getContext("2d").drawImage(img, 0, 0, tela.width, tela.height);
+      return tela.toDataURL("image/jpeg", 0.85).split(",")[1];
+    } finally {
+      URL.revokeObjectURL(endereco);
+    }
+  }
+
+  async function falarComAssistente(pedido) {
+    const msg = $("msg-assistente");
+    travarAssistente(true);
+    mostrar(msg, pedido.imagem ? "Lendo o cupom…" : "Pensando…", "ok");
+    try {
+      const { data } = await banco.auth.getSession();
+      if (!data.session) return mostrar(msg, "Sua sessão expirou. Toque em Sair e entre de novo.");
+      const resp = await fetch("/api/assistente", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session.access_token}`
+        },
+        body: JSON.stringify({ ...pedido, categorias: CATEGORIAS })
+      });
+      const corpo = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        return mostrar(msg, corpo.erro || "O assistente não respondeu. Tente de novo em instantes ou lance à mão.");
+      }
+      mostrar(msg, corpo.resposta, "ok");
+      if (corpo.lancou) {
+        $("frase").value = "";
+        carregarGastos();
+      }
+    } catch (erro) {
+      mostrar(msg, fraseDeErro(erro));
+    } finally {
+      travarAssistente(false);
+    }
+  }
 
   $("form-assistente").addEventListener("submit", (e) => {
     e.preventDefault();
-    mostrar($("msg-assistente"), AVISO_ASSISTENTE, "ok");
+    const mensagem = $("frase").value.trim();
+    if (!mensagem) return mostrar($("msg-assistente"), "Escreva um gasto, por exemplo: mercado 50 hoje.");
+    falarComAssistente({ mensagem });
   });
 
-  $("botao-foto").addEventListener("click", () => {
-    mostrar($("msg-assistente"), AVISO_ASSISTENTE, "ok");
+  $("botao-foto").addEventListener("click", () => seletorFoto.click());
+
+  seletorFoto.addEventListener("change", async () => {
+    const arquivo = seletorFoto.files[0];
+    seletorFoto.value = "";
+    if (!arquivo) return;
+    let imagem;
+    try {
+      imagem = await reduzirFoto(arquivo);
+    } catch {
+      return mostrar($("msg-assistente"), "Não consegui abrir esta foto. Tente tirar outra.");
+    }
+    // A foto só vai para o assistente; não é guardada em lugar nenhum.
+    falarComAssistente({ mensagem: $("frase").value.trim(), imagem, mime: "image/jpeg" });
   });
 
   // ---------- Início ----------
