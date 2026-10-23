@@ -46,6 +46,9 @@
     if (!navigator.onLine || msg.includes("failed to fetch") || msg.includes("network")) {
       return "Sem conexão com a internet. Verifique a conexão e tente de novo; o que você digitou continua aqui.";
     }
+    if ((erro && erro.code === "23502") || msg.includes("null value")) {
+      return "Falta preencher um campo obrigatório. Confira o formulário e salve de novo.";
+    }
     if (msg.includes("invalid login")) return "E-mail ou senha incorretos. Confira e tente de novo.";
     if (msg.includes("already registered") || msg.includes("already been registered")) {
       return "Este e-mail já tem conta. Toque em Entrar.";
@@ -296,7 +299,8 @@
     const novo = {
       dono: usuario.id,
       data,
-      descricao: $("descricao").value.trim() || null,
+      // A tabela exige descrição; sem texto, usa o nome da categoria.
+      descricao: $("descricao").value.trim() || escolhida.value,
       valor,
       categoria: escolhida.value,
       origem: "manual"
