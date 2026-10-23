@@ -187,6 +187,8 @@
       porCategoria[cat] += valor;
     }
     $("valor-total").textContent = moeda.format(total);
+    // Média por dia: total do mês dividido pelo dia de hoje.
+    $("media-dia").textContent = `Média de ${moeda.format(total / new Date().getDate())} por dia`;
 
     const maior = Math.max(...Object.values(porCategoria), 0);
     const lista = $("barras");
