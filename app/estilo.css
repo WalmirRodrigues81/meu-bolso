@@ -134,6 +134,10 @@ input:focus { outline: 3px solid var(--azul); border-color: var(--azul); }
 
 /* Assistente */
 .linha-botoes { display: flex; gap: 8px; }
+.linha-voz { display: flex; gap: 8px; align-items: stretch; }
+.linha-voz input { flex: 1; min-width: 0; }
+.botao-voz { width: auto; flex: none; min-height: 44px; margin-top: 0; padding: 0 12px; white-space: nowrap; }
+.dica { margin: 6px 0 0; font-size: 0.9rem; color: var(--texto-suave); }
 
 /* Resumo */
 .resumo p { margin: 0; white-space: pre-wrap; line-height: 1.4; }

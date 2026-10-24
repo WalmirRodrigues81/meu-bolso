@@ -454,12 +454,78 @@
     }
   }
 
-  $("form-assistente").addEventListener("submit", (e) => {
-    e.preventDefault();
+  function enviarFrase() {
     const mensagem = $("frase").value.trim();
     if (!mensagem) return mostrar($("msg-assistente"), "Escreva um gasto, por exemplo: mercado 50 hoje.");
     falarComAssistente({ mensagem });
+  }
+
+  $("form-assistente").addEventListener("submit", (e) => {
+    e.preventDefault();
+    enviarFrase();
   });
+
+  // ---------- Falar o gasto (reconhecimento de voz do navegador) ----------
+
+  const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!Reconhecimento) {
+    // Sem reconhecimento de voz: o botão some e fica a dica do teclado.
+    $("botao-voz").hidden = true;
+    $("dica-voz").hidden = false;
+  } else {
+    const ouvido = new Reconhecimento();
+    ouvido.lang = "pt-BR";
+    ouvido.interimResults = false;
+    ouvido.maxAlternatives = 1;
+    let ouvindo = false;
+    let entendeu = false;
+
+    function fimDaEscuta() {
+      ouvindo = false;
+      $("botao-voz").textContent = "🎤 Falar";
+    }
+
+    ouvido.addEventListener("result", (e) => {
+      const texto = e.results[0][0].transcript.trim();
+      if (!texto) return;
+      entendeu = true;
+      $("frase").value = texto;
+      enviarFrase();
+    });
+
+    ouvido.addEventListener("error", (e) => {
+      entendeu = true;
+      const frases = {
+        "not-allowed": "O microfone está bloqueado. Permita o microfone nas configurações do navegador e tente de novo.",
+        "service-not-allowed": "O microfone está bloqueado. Permita o microfone nas configurações do navegador e tente de novo.",
+        "no-speech": "Não ouvi nada. Toque em Falar e fale de novo.",
+        "audio-capture": "Não encontrei o microfone. Confira se ele está ligado e tente de novo.",
+        "network": "Sem conexão com a internet. Verifique a conexão e tente de novo."
+      };
+      if (e.error !== "aborted") {
+        mostrar($("msg-assistente"), frases[e.error] || "Não consegui ouvir. Toque em Falar e tente de novo, ou escreva o gasto.");
+      }
+    });
+
+    ouvido.addEventListener("end", () => {
+      fimDaEscuta();
+      if (!entendeu) mostrar($("msg-assistente"), "Não ouvi nada. Toque em Falar e fale de novo.");
+    });
+
+    $("botao-voz").addEventListener("click", () => {
+      if (ouvindo) return ouvido.stop();
+      entendeu = false;
+      try {
+        ouvido.start();
+      } catch {
+        return mostrar($("msg-assistente"), "Não consegui ligar o microfone. Tente de novo em instantes.");
+      }
+      ouvindo = true;
+      $("botao-voz").textContent = "Ouvindo…";
+      mostrar($("msg-assistente"), "Pode falar.", "ok");
+    });
+  }
 
   const seletorCamera = criarSeletorFoto(true);
   const seletorGaleria = criarSeletorFoto(false);
