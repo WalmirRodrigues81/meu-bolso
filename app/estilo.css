@@ -101,6 +101,8 @@ input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
   padding: 14px 16px;
 }
 .topo h1 { font-size: 1.2rem; }
+.titulo-marca { display: flex; align-items: center; gap: 8px; }
+.saco { flex: none; }
 
 .total { background: var(--azul-medio); color: var(--branco); }
 .rotulo { margin: 0; color: var(--azul-claro); font-size: 0.9rem; }

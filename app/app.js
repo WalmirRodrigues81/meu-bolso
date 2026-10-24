@@ -345,6 +345,40 @@
 
   const LADO_MAXIMO = 1600;
 
+  // Som de aviso quando um gasto é lançado por foto, só no celular.
+  const ehCelular = window.matchMedia("(pointer: coarse)").matches;
+  let somContexto = null;
+
+  // Prepara o som no toque do botão: o iPhone só libera o áudio depois de um toque.
+  function prepararSom() {
+    const Contexto = window.AudioContext || window.webkitAudioContext;
+    if (!ehCelular || !Contexto) return;
+    if (!somContexto) somContexto = new Contexto();
+    if (somContexto.state !== "running") somContexto.resume().catch(() => {});
+  }
+
+  // Um "plim" de duas notas, gerado pelo próprio navegador, e uma vibração curta no Android.
+  function tocarAlarme() {
+    if (!ehCelular) return;
+    if (navigator.vibrate) navigator.vibrate(150);
+    if (!somContexto) return;
+    if (somContexto.state !== "running") somContexto.resume().catch(() => {});
+    const agora = somContexto.currentTime + 0.05;
+    [880, 1320].forEach((frequencia, i) => {
+      const nota = somContexto.createOscillator();
+      const volume = somContexto.createGain();
+      const inicio = agora + i * 0.15;
+      nota.type = "sine";
+      nota.frequency.value = frequencia;
+      volume.gain.setValueAtTime(0.0001, inicio);
+      volume.gain.exponentialRampToValueAtTime(0.4, inicio + 0.02);
+      volume.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.3);
+      nota.connect(volume).connect(somContexto.destination);
+      nota.start(inicio);
+      nota.stop(inicio + 0.32);
+    });
+  }
+
   // Seletores de foto escondidos: um abre a câmera traseira direto, o outro a galeria.
   function criarSeletorFoto(camera) {
     const seletor = document.createElement("input");
@@ -400,6 +434,7 @@
       }
       mostrar(msg, corpo.resposta, "ok");
       if (corpo.lancou) {
+        if (pedido.imagem) tocarAlarme();
         $("frase").value = "";
         carregarGastos();
       }
@@ -419,8 +454,14 @@
 
   const seletorCamera = criarSeletorFoto(true);
   const seletorGaleria = criarSeletorFoto(false);
-  $("botao-foto").addEventListener("click", () => seletorCamera.click());
-  $("botao-galeria").addEventListener("click", () => seletorGaleria.click());
+  $("botao-foto").addEventListener("click", () => {
+    prepararSom();
+    seletorCamera.click();
+  });
+  $("botao-galeria").addEventListener("click", () => {
+    prepararSom();
+    seletorGaleria.click();
+  });
 
   async function fotoEscolhida(seletor) {
     const arquivo = seletor.files[0];
