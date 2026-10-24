@@ -2,7 +2,14 @@
 (function () {
   const config = window.MEU_BOLSO;
   const CATEGORIAS = config.CATEGORIAS;
-  const banco = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_CHAVE_PUBLICA);
+  const SEM_CONEXAO = "Sem conexão com a internet. Verifique a conexão e abra o app de novo.";
+
+  // Se o Supabase não carregou pela internet, avisa em vez de ficar em "Carregando…".
+  if (!window.supabase) {
+    document.getElementById("carregando").textContent = SEM_CONEXAO;
+    return;
+  }
+  const banco =window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_CHAVE_PUBLICA);
 
   const $ = (id) => document.getElementById(id);
   const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -168,6 +175,8 @@
       .order("data", { ascending: false })
       .order("criado_em", { ascending: false });
     if (error) {
+      // Avisa também junto do total, para o R$ 0,00 não parecer que não há gastos.
+      $("media-dia").textContent = "Não consegui carregar os gastos. Puxe a tela para baixo e tente de novo.";
       $("lista-vazia").hidden = false;
       $("lista-vazia").textContent = fraseDeErro(error);
       return;
@@ -481,10 +490,15 @@
 
   desenharCategorias();
 
-  banco.auth.getSession().then(({ data }) => {
-    if (data.session) abrirApp(data.session.user);
-    else abrirEntrada();
-  });
+  banco.auth.getSession()
+    .then(({ data }) => {
+      if (data.session) abrirApp(data.session.user);
+      else abrirEntrada();
+    })
+    .catch(() => {
+      abrirEntrada();
+      mostrar($("msg-entrada"), SEM_CONEXAO);
+    });
 
   banco.auth.onAuthStateChange((evento, sessao) => {
     if (evento === "SIGNED_OUT" || !sessao) {

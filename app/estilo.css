@@ -61,7 +61,7 @@ input {
   background: var(--branco);
   color: var(--texto);
 }
-input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
+input:focus { outline: 3px solid var(--azul); border-color: var(--azul); }
 
 .botao {
   width: 100%;
@@ -79,6 +79,7 @@ input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
 .botao-link {
   background: none; border: 0; font: inherit;
   color: var(--branco); text-decoration: underline; cursor: pointer;
+  min-height: 44px; padding: 0 12px;
 }
 
 .mensagem { min-height: 1.2em; margin: 8px 0 0; color: var(--erro); font-size: 0.9rem; }
@@ -109,7 +110,7 @@ input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
 .valor-total { margin: 4px 0 12px; font-size: 2.2rem; font-weight: 700; }
 
 .barras { list-style: none; margin: 0; padding: 0; }
-.barras li { margin-bottom: 8px; font-size: 0.85rem; }
+.barras li { margin-bottom: 8px; font-size: 0.9rem; }
 .barras .linha { display: flex; justify-content: space-between; margin-bottom: 3px; }
 .barras .trilho { height: 8px; background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
 .barras .barra { height: 100%; background: var(--branco); border-radius: 4px; }
@@ -119,7 +120,8 @@ input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
 .categorias label { margin: 0; }
 .categorias input { position: absolute; opacity: 0; width: 1px; }
 .categorias span {
-  display: inline-block;
+  display: inline-flex; align-items: center;
+  min-height: 44px;
   padding: 9px 12px;
   border: 1px solid var(--azul);
   border-radius: 20px;
@@ -128,7 +130,7 @@ input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
   cursor: pointer;
 }
 .categorias input:checked + span { background: var(--azul); color: var(--branco); }
-.categorias input:focus-visible + span { outline: 2px solid var(--azul-claro); }
+.categorias input:focus-visible + span { outline: 3px solid var(--azul); outline-offset: 2px; }
 
 /* Assistente */
 .linha-botoes { display: flex; gap: 8px; }
@@ -147,12 +149,13 @@ input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
 .lista li:first-child { border-top: 0; }
 .lista .info { flex: 1; min-width: 0; }
 .lista .desc { margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lista .detalhe { margin: 2px 0 0; font-size: 0.8rem; color: var(--texto-suave); }
+.lista .detalhe { margin: 2px 0 0; font-size: 0.9rem; color: var(--texto-suave); }
 .lista .valor { font-weight: 700; white-space: nowrap; }
 .lista .apagar {
   background: none; border: 1px solid var(--borda); border-radius: 8px;
-  color: var(--erro); font: inherit; font-size: 0.8rem;
-  padding: 6px 8px; cursor: pointer;
+  color: var(--erro); font: inherit; font-size: 0.9rem;
+  padding: 6px 10px; cursor: pointer;
+  min-height: 44px; min-width: 44px; margin-left: 4px;
 }
 
 /* Computador: centraliza numa coluna */
